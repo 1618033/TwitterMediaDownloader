@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TMD — Twitter Media Downloader",
   "description": "Download content you like from Twitter with 1-click",
-  "version": "4.5.0",
+  "version": "4.6.0",
   "author": "rodrigo.palomares@itium.mx",
   "homepage_url": "https://github.com/1618033/TwitterMediaDownloader.git",
   "icons": {

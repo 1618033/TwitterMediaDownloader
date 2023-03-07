@@ -39,25 +39,36 @@ observer.observe(document.documentElement, {
 })
 
 function initialize() {
-  const user = window.location.pathname.split('/')[1] ?? ''
+  let urlParts = window.location.pathname.split('/')
+  let user = urlParts[1] ?? ''
   let prevUrl: string = window.location.href
 
-  // noinspection JSIgnoredPromiseFromCall
-  chrome.runtime.sendMessage({
-    type: 'viewed',
-    user
-  })
+  if (urlParts.length == 2) {
+    // noinspection JSIgnoredPromiseFromCall
+    chrome.runtime.sendMessage({
+      type: 'viewed',
+      user
+    })
+    console.debug('Sending viewed message', user)
+  }
+
 
   setInterval(() => {
     const currUrl = window.location.href
     if (currUrl != prevUrl) {
       prevUrl = currUrl
-      // noinspection JSIgnoredPromiseFromCall
-      chrome.runtime.sendMessage({
-        type: 'viewed',
-        user: currUrl.split('/')[3] ?? ''
-      })
-      console.log(`URL changed to : ${currUrl}`)
+      urlParts = currUrl.split('/')
+      user = urlParts[3] ?? ''
+
+      if (urlParts.length == 4) {
+
+        // noinspection JSIgnoredPromiseFromCall
+        chrome.runtime.sendMessage({
+          type: 'viewed',
+          user: user
+        })
+        console.debug('URL changed. Sending viewed message', user)
+      }
     }
   }, 60)
 }
@@ -230,7 +241,6 @@ function processRequest(request: any) {
       updateViewed(request.user)
       break
   }
-  console.log('Processing request in tab', request)
 }
 
 function updateViewed(user?: string, rootNode?: HTMLElement) {
@@ -240,7 +250,7 @@ function updateViewed(user?: string, rootNode?: HTMLElement) {
       color: 'darkgray'
     })
   } else {
-    chrome.storage.sync.get(
+    chrome.storage.local.get(
       {
         viewedList: {}
       },

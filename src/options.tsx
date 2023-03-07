@@ -12,11 +12,18 @@ const Options = () => {
       {
         friendlyName: false,
         markViewed: false,
-        viewedList: {}
       },
-      ({friendlyName, markViewed, viewedList}) => {
+      ({friendlyName, markViewed}) => {
         setFriendlyName(friendlyName);
         setMarkViewed(markViewed)
+      }
+    );
+
+    chrome.storage.local.get(
+      {
+        viewedList: {}
+      },
+      ({viewedList}) => {
         setViewedCount(Object.keys(viewedList).length)
       }
     );
@@ -40,7 +47,7 @@ const Options = () => {
 
   const clearViewed = () => {
 
-    chrome.storage.sync.set(
+    chrome.storage.local.set(
       {
         viewedList: {}
       },

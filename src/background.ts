@@ -180,13 +180,10 @@ function isRenamerActivated() {
 
 
 function processRequest(request: any) {
-  console.log('Processing request in bg', request)
-
   switch (request.type) {
     case 'video':
       processVideoSource(request)
       break
-
     case 'image':
       downloadImage(request.url, request.friendlyName)
       break
@@ -197,36 +194,42 @@ function processRequest(request: any) {
 }
 
 function processViewed(user: string) {
-  console.log('processViewed', user)
+  console.debug('Viewed message received', user)
 
   chrome.storage.sync.get(
     {
       markViewed: false,
-      viewedList: {}
     },
-    ({markViewed, viewedList}) => {
-      if (!markViewed || viewedList[user])
+    ({markViewed}) => {
+      if (!markViewed)
         return
 
+      chrome.storage.local.get(
+        {
+          viewedList: {}
+        },
+        ({viewedList}) => {
+          if (viewedList[user])
+            return
 
-      viewedList[user] = 1
-      chrome.storage.sync.set({viewedList}, () => {
-        console.log('sending message', user)
-
-        chrome.tabs.query({},
-          (tabs) => {
-            for (const tab of tabs) {
-              // noinspection JSIgnoredPromiseFromCall
-              chrome.tabs.sendMessage(tab.id || 0, {
-                type: 'update-viewed',
-                user
+          viewedList[user] = 1
+          chrome.storage.local.set({viewedList}, () => {
+            chrome.tabs.query({},
+              (tabs) => {
+                for (const tab of tabs) {
+                  // noinspection JSIgnoredPromiseFromCall
+                  chrome.tabs.sendMessage(tab.id || 0, {
+                    type: 'update-viewed',
+                    user
+                  })
+                }
               })
-            }
           })
-      })
+        }
+      )
+
     }
   )
-
 
 }
 
