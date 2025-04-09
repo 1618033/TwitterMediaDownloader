@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "TMD — Twitter Media Downloader",
-  "description": "Download content you like from Twitter with 1-click",
-  "version": "4.6.0",
+  "name": "X Visted profile indicator",
+  "description": "Strikesthrough already visited profiles",
+  "version": "7.0.0",
   "author": "rodrigo.palomares@itium.mx",
   "homepage_url": "https://github.com/1618033/TwitterMediaDownloader.git",
   "icons": {
@@ -24,6 +24,7 @@
         "js/content_script.js"
       ],
       "matches": [
+        "*://x.com/*",
         "*://twitter.com/*",
         "*://mobile.twitter.com/*"
       ]
@@ -37,6 +38,7 @@
     "downloads"
   ],
   "host_permissions": [
+    "*://x.com/*",
     "*://twitter.com/*",
     "*://*.twitter.com/*",
     "*://*.twimg.com/*"

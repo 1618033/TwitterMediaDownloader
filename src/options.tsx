@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
+import { createRoot } from 'react-dom/client';
 
 const Options = () => {
   const [status, setStatus] = useState<string>("");
-  const [friendlyName, setFriendlyName] = useState<boolean>(false);
   const [markViewed, setMarkViewed] = useState<boolean>(false);
   const [viewedCount, setViewedCount] = useState<number>(0);
 
@@ -13,8 +13,7 @@ const Options = () => {
         friendlyName: false,
         markViewed: false,
       },
-      ({friendlyName, markViewed}) => {
-        setFriendlyName(friendlyName);
+      ({markViewed}) => {
         setMarkViewed(markViewed)
       }
     );
@@ -32,7 +31,6 @@ const Options = () => {
   const saveOptions = () => {
     chrome.storage.sync.set(
       {
-        friendlyName,
         markViewed
       },
       () => {
@@ -60,9 +58,6 @@ const Options = () => {
 
   return (
     <>
-      <div>
-        More options in the future
-      </div>
       <div style={{padding: '10px 0'}}>
         <label>
           <input type="checkbox" checked={markViewed} style={{marginRight: '10px'}} onChange={() => setMarkViewed(!markViewed)} />
@@ -73,21 +68,15 @@ const Options = () => {
           <button style={{marginLeft: '10px'}} onClick={() => clearViewed()}>Clear visited links</button>
         </div>
       </div>
-      <div style={{padding: '10px 0'}}>
-        <label>
-          <input type="checkbox" checked={friendlyName} style={{marginRight: '10px'}} onChange={() => setFriendlyName(!friendlyName)} />
-          Save with friendly filename
-        </label>
-      </div>
       <button onClick={saveOptions}>Save</button>
       <div style={{marginLeft: '10px', display: 'inline-block'}}>{status}</div>
     </>
   );
 };
 
-ReactDOM.render(
+const root = createRoot(document.getElementById("root") as HTMLElement);
+root.render(
   <React.StrictMode>
     <Options />
-  </React.StrictMode>,
-  document.getElementById("root")
+  </React.StrictMode>
 );
