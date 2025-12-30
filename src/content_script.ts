@@ -1,7 +1,17 @@
 import 'jquery'
 
+// Add these type definitions
+interface ViewedList {
+  [key: string]: number;
+}
+
+interface StorageLocalData {
+  viewedList?: ViewedList;
+}
+
 $(initialize)
 chrome.runtime.onMessage.addListener(processRequest)
+// ... rest of code
 
 
 let observer = new MutationObserver(mutationRecords => {
@@ -76,12 +86,15 @@ function updateViewed(user?: string, rootNode?: HTMLElement) {
       {
         viewedList: {}
       },
-      ({viewedList}) => {
-        for (const user in viewedList) {
-          $(rootNode || document).find(`a[href="/${user}"]`).find('span:eq(1)').css({
-            textDecoration: 'line-through',
-            color: 'darkgray'
-          })
+      (result) => {
+        const { viewedList } = result as StorageLocalData
+        if (viewedList) {
+          for (const user in viewedList) {
+            $(rootNode || document).find(`a[href="/${user}"]`).find('span:eq(1)').css({
+              textDecoration: 'line-through',
+              color: 'darkgray'
+            })
+          }
         }
       }
     )

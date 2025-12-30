@@ -1,3 +1,16 @@
+// Add these type definitions at the top of the file
+interface ViewedList {
+  [key: string]: number;
+}
+
+interface StorageSyncData {
+  markViewed?: boolean;
+}
+
+interface StorageLocalData {
+  viewedList?: ViewedList;
+}
+
 let friendlyNameList: { [key: string]: string; } = {}
 const fileNameRegex = /([\w,\s-.]+\.[A-Za-z]{2,4}$)/
 
@@ -18,7 +31,8 @@ function processViewed(user: string) {
     {
       markViewed: false,
     },
-    ({markViewed}) => {
+    (result) => {
+      const { markViewed } = result as StorageSyncData
       if (!markViewed)
         return
 
@@ -26,12 +40,13 @@ function processViewed(user: string) {
         {
           viewedList: {}
         },
-        ({viewedList}) => {
-          if (viewedList[user])
+        (result) => {
+          const { viewedList } = result as StorageLocalData
+          if (!viewedList || viewedList[user])
             return
 
           viewedList[user] = 1
-          chrome.storage.local.set({viewedList}, () => {
+          chrome.storage.local.set({ viewedList }, () => {
             chrome.tabs.query({},
               (tabs) => {
                 for (const tab of tabs) {

@@ -2,6 +2,20 @@ import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { createRoot } from 'react-dom/client';
 
+// Add these type definitions
+interface ViewedList {
+  [key: string]: number;
+}
+
+interface StorageSyncData {
+  friendlyName?: boolean;
+  markViewed?: boolean;
+}
+
+interface StorageLocalData {
+  viewedList?: ViewedList;
+}
+
 const Options = () => {
   const [status, setStatus] = useState<string>("");
   const [markViewed, setMarkViewed] = useState<boolean>(false);
@@ -13,8 +27,9 @@ const Options = () => {
         friendlyName: false,
         markViewed: false,
       },
-      ({markViewed}) => {
-        setMarkViewed(markViewed)
+      (result) => {
+        const { markViewed } = result as StorageSyncData
+        setMarkViewed(markViewed ?? false)
       }
     );
 
@@ -22,8 +37,9 @@ const Options = () => {
       {
         viewedList: {}
       },
-      ({viewedList}) => {
-        setViewedCount(Object.keys(viewedList).length)
+      (result) => {
+        const { viewedList } = result as StorageLocalData
+        setViewedCount(Object.keys(viewedList ?? {}).length)
       }
     );
   }, []);
