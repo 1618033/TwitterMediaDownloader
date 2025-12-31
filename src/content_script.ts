@@ -1,102 +1,204 @@
-import 'jquery'
+export { };
 
-// Add these type definitions
-interface ViewedList {
-  [key: string]: number;
+async function getViewedUsers(): Promise<string[]> {
+  try {
+    const result = await chrome.storage.sync.get({ viewedUsers: [] });
+    return result.viewedUsers as string[];
+  } catch (error) {
+    console.error('Error getting viewed users:', error);
+    return [];
+  }
 }
 
-interface StorageLocalData {
-  viewedList?: ViewedList;
-}
+// Keep a live reference that updates
+let viewedUsersSet = new Set<string>(await getViewedUsers());
 
-$(initialize)
-chrome.runtime.onMessage.addListener(processRequest)
-// ... rest of code
+(function () {
+  'use strict';
 
+  let lastUrl = location.href;
 
-let observer = new MutationObserver(mutationRecords => {
-  for (let mutation of mutationRecords) {
-    for (let node of mutation.addedNodes) {
-      if (!(node instanceof HTMLElement)) continue
+  function onUrlChange(newUrl: string, _oldUrl: string | null) {
+    let hasAdditionalSegments = false;
+    let user = null;
+    try {
+      const urlObj = new URL(newUrl || location.href);
+      const pathParts = urlObj.pathname.replace(/^\/+|\/+$/g, '').split('/');
 
-      const selector = '[aria-label="Share post"]:not([data-tmd="processed"])'
-      let nodes: HTMLElement[] | NodeListOf<Element> = node.matches(selector) ? [node] : []
-      nodes = nodes.length ? nodes : node.querySelectorAll(selector)
+      if (pathParts.length > 1) {
+        hasAdditionalSegments = true;
+      }
+      if (pathParts.length > 0 && pathParts[0]) {
+        user = pathParts[0];
+      }
 
-      updateViewed(undefined, node)
-    }
-  }
-})
-
-observer.observe(document.documentElement, {
-  childList: true,
-  subtree: true,
-})
-
-function initialize() {
-  let urlParts = window.location.pathname.split('/')
-  let user = urlParts[1] ?? ''
-  let prevUrl: string = window.location.href
-
-  if (urlParts.length == 2) {
-    // noinspection JSIgnoredPromiseFromCall
-    chrome.runtime.sendMessage({
-      type: 'viewed',
-      user
-    })
-    console.debug('Sending viewed message', user)
-  }
-
-  setInterval(() => {
-    const currUrl = window.location.href
-    if (currUrl != prevUrl) {
-      prevUrl = currUrl
-      urlParts = currUrl.split('/')
-      user = urlParts[3] ?? ''
-
-      if (urlParts.length == 4) {
-
-        // noinspection JSIgnoredPromiseFromCall
+      if (user && !hasAdditionalSegments && user != 'home') {
+        console.debug('Sending viewed message: ', user);
         chrome.runtime.sendMessage({
           type: 'viewed',
           user: user
-        })
-        console.debug('URL changed. Sending viewed message', user)
+        }).catch(err => console.debug('Error sending viewed message:', err));
+      }
+
+    } catch (e) {
+      console.error('Failed to determine additional URL segments:', e);
+    }
+  }
+
+  // Create observer for dynamic content changes
+  const observer = new MutationObserver(() => {
+    if (lastUrl !== location.href) {
+      const oldUrl = lastUrl;
+      lastUrl = location.href;
+      onUrlChange(location.href, oldUrl);
+    }
+  });
+
+  // Start observing
+  observer.observe(document, {
+    subtree: true,
+    childList: true
+  });
+
+  // Handle browser back/forward buttons
+  window.addEventListener('popstate', () => {
+    if (lastUrl !== location.href) {
+      const oldUrl = lastUrl;
+      lastUrl = location.href;
+      onUrlChange(location.href, oldUrl);
+    }
+  });
+
+  // Override pushState to detect programmatic navigation
+  const originalPushState = history.pushState;
+  history.pushState = function (data: any, unused: string, url?: string | URL | null) {
+    originalPushState.call(this, data, unused, url);
+    if (lastUrl !== location.href) {
+      const oldUrl = lastUrl;
+      lastUrl = location.href;
+      onUrlChange(location.href, oldUrl);
+    }
+  };
+
+  // Override replaceState to detect programmatic navigation
+  const originalReplaceState = history.replaceState;
+  history.replaceState = function (data: any, unused: string, url?: string | URL | null) {
+    originalReplaceState.call(this, data, unused, url);
+    if (lastUrl !== location.href) {
+      const oldUrl = lastUrl;
+      lastUrl = location.href;
+      onUrlChange(location.href, oldUrl);
+    }
+  };
+
+  // Optional: Handle hash changes specifically
+  window.addEventListener('hashchange', () => {
+    if (lastUrl !== location.href) {
+      const oldUrl = lastUrl;
+      lastUrl = location.href;
+      onUrlChange(location.href, oldUrl);
+    }
+  });
+
+  // Initial load
+  onUrlChange(location.href, null);
+})();
+
+// Helper function to mark user links as viewed
+function markUserAsViewed(user: string, rootNode?: HTMLElement | Document) {
+  const root = rootNode || document;
+  const links = root.querySelectorAll<HTMLAnchorElement>(`a[href="/${user}"]:not([tabindex])`);
+
+  console.debug(`Marking user ${user} as viewed. Found ${links.length} links`);
+
+  links.forEach(link => {
+    const spans = link.querySelectorAll('span');
+    if (spans.length > 1) {
+      const targetSpan = spans[1] as HTMLElement;
+      targetSpan.style.textDecoration = 'line-through';
+      targetSpan.style.color = 'darkgray';
+    }
+  });
+}
+
+(function () {
+  // Helper function to process all current and future matching elements
+  function processElement(rootNode?: HTMLElement | Document) {
+    const root = rootNode || document;
+    const selector = 'article:not([data-tmd="processed"])';
+    const nodes = Array.from(root.querySelectorAll<HTMLElement>(selector));
+
+    nodes.forEach(node => {
+      // Mark article as processed to avoid reprocessing
+      node.setAttribute("data-tmd", "processed");
+
+      // Process all viewed users for this article
+      for (const user of viewedUsersSet) {
+        markUserAsViewed(user, node);
+      }
+
+      // Custom styling (optional - you can remove if not needed)
+      node.style.border = "1px solid #0074D9";
+      node.title = "Processed by extension";
+
+      // Add badge (optional - you can remove if not needed)
+      if (!node.querySelector('.tmd-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'tmd-badge';
+        badge.textContent = "✨";
+        badge.style.marginLeft = '4px';
+        node.appendChild(badge);
+      }
+    });
+  }
+
+  // Run on initial load
+  processElement();
+
+  // Hook into existing MutationObserver to process dynamically added nodes
+  const dynamicShareObserver = new MutationObserver(mutationRecords => {
+    for (const mutation of mutationRecords) {
+      for (const node of Array.from(mutation.addedNodes)) {
+        if (!(node instanceof HTMLElement)) continue;
+        processElement(node);
       }
     }
-  }, 60)
-}
+  });
 
-function processRequest(request: any) {
+  dynamicShareObserver.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+})();
+
+chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
+  processRequestFromBackground(request);
+  return true; // Indicates async response
+});
+
+function processRequestFromBackground(request: any) {
   switch (request.type) {
     case 'update-viewed':
-      updateViewed(request.user)
-      break
+      updateViewed(request.user);
+      break;
   }
 }
 
-function updateViewed(user?: string, rootNode?: HTMLElement) {
-  if (user) {
-    $(rootNode || document).find(`a[href="/${user}"]`).find('span:eq(1)').css({
-      textDecoration: 'line-through',
-      color: 'darkgray'
-    })
-  } else {
-    chrome.storage.local.get(
-      {
-        viewedList: {}
-      },
-      (result) => {
-        const { viewedList } = result as StorageLocalData
-        if (viewedList) {
-          for (const user in viewedList) {
-            $(rootNode || document).find(`a[href="/${user}"]`).find('span:eq(1)').css({
-              textDecoration: 'line-through',
-              color: 'darkgray'
-            })
-          }
-        }
-      }
-    )
-  }
+function updateViewed(user?: string, rootNode?: HTMLElement | Document) {
+  console.debug('Update viewed message received for user:', user);
+
+  if (!user) return;
+
+  // Add user to our local set
+  viewedUsersSet.add(user);
+
+  // Mark all existing links to this user across the entire page
+  markUserAsViewed(user, rootNode);
+
+  // Also reprocess all unprocessed articles (in case new ones appeared)
+  const unprocessedArticles = document.querySelectorAll<HTMLElement>('article:not([data-tmd="processed"])');
+  unprocessedArticles.forEach(article => {
+    article.setAttribute("data-tmd", "processed");
+    markUserAsViewed(user, article);
+  });
 }

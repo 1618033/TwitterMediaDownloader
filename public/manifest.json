@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "X Visted profile indicator",
-  "description": "Strikesthrough already visited profiles",
-  "version": "7.0.0",
+  "name": "X Visited profile indicator",
+  "description": "Strikethroughs already visited profiles",
+  "version": "8.0.0",
   "author": "rodrigo.palomares@itium.mx",
   "homepage_url": "https://github.com/1618033/TwitterMediaDownloader.git",
   "icons": {
@@ -12,7 +12,8 @@
     "96": "96.png"
   },
   "options_ui": {
-    "page": "options.html"
+    "page": "options.html",
+    "open_in_tab": false
   },
   "content_scripts": [
     {
@@ -20,27 +21,31 @@
         "tmd.css"
       ],
       "js": [
-        "js/jquery.min.js",
         "js/content_script.js"
       ],
       "matches": [
         "*://x.com/*",
         "*://twitter.com/*",
         "*://mobile.twitter.com/*"
-      ]
+      ],
+      "run_at": "document_idle"
     }
   ],
   "background": {
-    "service_worker": "js/background.js"
+    "service_worker": "js/background.js",
+    "type": "module"
   },
   "permissions": [
-    "storage",
-    "downloads"
+    "storage"
   ],
   "host_permissions": [
     "*://x.com/*",
     "*://twitter.com/*",
     "*://*.twitter.com/*",
     "*://*.twimg.com/*"
-  ]
+  ],
+  "minimum_chrome_version": "88",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }

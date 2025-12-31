@@ -1,6 +1,6 @@
 {
   "name": "x_visited_profiles",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "description": "Mark visited profiles",
   "main": "index.js",
   "scripts": {

@@ -1,11 +1,8 @@
-// noinspection JSUnusedLocalSymbols
+const webpack = require("webpack");
+const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
+const srcDir = path.join(__dirname, "..", "src");
 
-const webpack = require("webpack")
-const path = require("path")
-const CopyPlugin = require("copy-webpack-plugin")
-const srcDir = path.join(__dirname, "..", "src")
-
-// noinspection JSUnusedGlobalSymbols
 module.exports = {
   entry: {
     options: path.join(srcDir, 'options.tsx'),
@@ -20,7 +17,7 @@ module.exports = {
     splitChunks: {
       name: "vendor",
       chunks(chunk) {
-        return chunk.name !== 'background'
+        return chunk.name !== 'background' && chunk.name !== 'content_script';
       }
     },
   },
@@ -39,13 +36,9 @@ module.exports = {
   plugins: [
     new CopyPlugin({
       patterns: [
-        {from: ".", to: "../", context: "public"},
-        {from: 'node_modules/jquery/dist/jquery.min.js', to: '../js'}
+        { from: ".", to: "../", context: "public" }
       ],
       options: {},
     }),
   ],
-  externals: {
-    jquery: 'jQuery',
-  },
-}
+};

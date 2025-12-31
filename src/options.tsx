@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
 import { createRoot } from 'react-dom/client';
 
 // Add these type definitions
