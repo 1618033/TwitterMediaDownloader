@@ -24,9 +24,7 @@
         "js/content_script.js"
       ],
       "matches": [
-        "*://x.com/*",
-        "*://twitter.com/*",
-        "*://mobile.twitter.com/*"
+        "*://x.com/*"
       ],
       "run_at": "document_idle"
     }
@@ -39,10 +37,7 @@
     "storage"
   ],
   "host_permissions": [
-    "*://x.com/*",
-    "*://twitter.com/*",
-    "*://*.twitter.com/*",
-    "*://*.twimg.com/*"
+    "*://x.com/*"
   ],
   "minimum_chrome_version": "88",
   "content_security_policy": {

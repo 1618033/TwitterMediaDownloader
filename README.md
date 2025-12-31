@@ -1,11 +1,11 @@
 # X Visited Profile Indicator
 
-Chrome extension that marks visited X (Twitter) profiles with a strikethrough style.
+Chrome extension that marks visited X profiles with a strikethrough style.
 
 ## Features
 
 - Automatically marks visited user profiles
-- Works on x.com, twitter.com, and mobile.twitter.com
+- Works on x.com
 - Lightweight implementation with no external dependencies
 - Privacy-focused: all data stored locally
 

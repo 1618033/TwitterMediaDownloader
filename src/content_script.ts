@@ -109,7 +109,6 @@ function markUserAsViewed(user: string, rootNode?: HTMLElement | Document) {
   const root = rootNode || document;
   const links = root.querySelectorAll<HTMLAnchorElement>(`a[href="/${user}"]:not([tabindex])`);
 
-  console.debug(`Marking user ${user} as viewed. Found ${links.length} links`);
 
   links.forEach(link => {
     const spans = link.querySelectorAll('span');
@@ -117,6 +116,11 @@ function markUserAsViewed(user: string, rootNode?: HTMLElement | Document) {
       const targetSpan = spans[1] as HTMLElement;
       targetSpan.style.textDecoration = 'line-through';
       targetSpan.style.color = 'darkgray';
+      
+      console.debug(`Marking user ${user} as viewed. Found ${links.length} links`);
+      if (rootNode && "setAttribute" in rootNode && typeof rootNode.setAttribute === "function") {
+        rootNode.setAttribute("data-tmd", "processed");
+      }
     }
   });
 }
@@ -130,25 +134,24 @@ function markUserAsViewed(user: string, rootNode?: HTMLElement | Document) {
 
     nodes.forEach(node => {
       // Mark article as processed to avoid reprocessing
-      node.setAttribute("data-tmd", "processed");
 
       // Process all viewed users for this article
       for (const user of viewedUsersSet) {
         markUserAsViewed(user, node);
       }
 
-      // Custom styling (optional - you can remove if not needed)
-      node.style.border = "1px solid #0074D9";
-      node.title = "Processed by extension";
+      // // Custom styling (optional - you can remove if not needed)
+      // node.style.border = "1px solid #0074D9";
+      // node.title = "Processed by extension";
 
-      // Add badge (optional - you can remove if not needed)
-      if (!node.querySelector('.tmd-badge')) {
-        const badge = document.createElement('span');
-        badge.className = 'tmd-badge';
-        badge.textContent = "✨";
-        badge.style.marginLeft = '4px';
-        node.appendChild(badge);
-      }
+      // // Add badge (optional - you can remove if not needed)
+      // if (!node.querySelector('.tmd-badge')) {
+      //   const badge = document.createElement('span');
+      //   badge.className = 'tmd-badge';
+      //   badge.textContent = "✨";
+      //   badge.style.marginLeft = '4px';
+      //   node.appendChild(badge);
+      // }
     });
   }
 
@@ -198,7 +201,6 @@ function updateViewed(user?: string, rootNode?: HTMLElement | Document) {
   // Also reprocess all unprocessed articles (in case new ones appeared)
   const unprocessedArticles = document.querySelectorAll<HTMLElement>('article:not([data-tmd="processed"])');
   unprocessedArticles.forEach(article => {
-    article.setAttribute("data-tmd", "processed");
     markUserAsViewed(user, article);
   });
 }
